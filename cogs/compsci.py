@@ -30,13 +30,15 @@ class ComputerScience(commands.Cog):
         else:
             base_url = "https://github.com/Chrovo/Productivity/blob/master"
             cmd = self.bot.get_command(command)
+
             if not cmd:
                 await ctx.send(f'No command called "{command}" found.')
+
             path = inspect.getsourcefile(cmd.callback.__code__)
             srcfile = path[38:].replace(r'\\', '/')
             codelines, starterline = inspect.getsourcelines(cmd.callback.__code__)
-            await ctx.send(codelines)
             base_url+=f"{srcfile}#L{starterline}-L{len(codelines)+starterline}"
+
             await ctx.send(base_url)
     
     @commands.command(description="Search through documentations!", aliases=['docs', 'documentation', 'rtfd'])
