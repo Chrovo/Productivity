@@ -11,14 +11,14 @@ class MyMenu(menus.Menu):
 
     def _create_embed_list(self, cog:commands.Cog) -> discord.Embed:
       embed = discord.Embed(title=cog.qualified_name, description=cog.description)
-      embed.add_field(name=f"{cog.qualified_name} Commands Help!", value="```yaml\n"+'\n'.join(['>'+command.name+f" {command.signature}" for command in cog.walk_commands()])+"```")
+      embed.add_field(name=f"{cog.qualified_name} Commands Help!", value="```yaml\n"+'\n'.join(['pr!'+command.name+f" {command.signature}" for command in cog.walk_commands()])+"```")
       embed.set_author(name="Chrovo#9488", icon_url="https://cdn.discordapp.com/avatars/615975131881144333/7d3bc639d2da754cc83b00412500e0cd.webp?size=1024") #shush
       embed.set_thumbnail(url=self.ctx.me.avatar_url)
       embed.set_footer(text=f"Requested by: {self.ctx.author}", icon_url=self.ctx.author.avatar_url)
       return embed
 
     async def send_initial_message(self, ctx, channel):
-      embed = discord.Embed(title="Help Command", description="Do >help [command or category] for help on a specific category or command!")
+      embed = discord.Embed(title="Help Command", description="Do pr!help [command or category] for help on a specific category or command!")
       embed.set_author(name="Chrovo#9488", icon_url="https://cdn.discordapp.com/avatars/615975131881144333/7d3bc639d2da754cc83b00412500e0cd.webp?size=1024") #dont talk about this
       embed.set_footer(text=f"Requested by: {ctx.author}", icon_url=ctx.author.avatar_url)
       embed.set_thumbnail(url=ctx.me.avatar_url)
@@ -61,7 +61,7 @@ class ProductivityHelp(commands.HelpCommand):
   def __init__(self) -> None:
     super().__init__(
       command_attrs={
-        'description':'the cool, subclassed, help command', 
+        'description':'A command that sends help and information about the other commands!', 
         'cooldown':commands.Cooldown(1, 5, commands.BucketType.user),
       }
     )

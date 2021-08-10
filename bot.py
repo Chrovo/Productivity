@@ -1,6 +1,7 @@
 import discord
 import os
 import json
+import aiohttp
 from discord.ext import commands, tasks
 from help import MyMenu, ProductivityHelp
 
@@ -17,6 +18,7 @@ class Productivity(commands.Bot):
             help_command=ProductivityHelp()
             ) # Add more stuff later
         self.db = None # Update later lol
+        self.session = aiohttp.ClientSession()
     
     async def on_ready(self) -> None:
         print("Bot is ready for use.")
@@ -34,10 +36,18 @@ class Productivity(commands.Bot):
             await context.send(embed=embed) # Add more stuff later
         elif isinstance(exception, commands.CommandNotFound):
             pass
+        elif isinstance(exception, commands.NotOwner):
+            await context.send("You are not the owner of this bot! This command is an owner only command!")
         else:
             raise exception
 
 bot = Productivity()
+
+@bot.command()
+@commands.is_owner()
+async def reload(ctx, ext):
+    bot.reload_extension("cogs."+ext)
+    await ctx.send(f"Cog {ext} has been reloaded")
 
 if __name__ == '__main__':
   for e in ["cogs."+e[:-3] for e in os.listdir("./cogs") if e.endswith(".py")]:
