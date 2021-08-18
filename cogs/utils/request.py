@@ -34,12 +34,6 @@ class Requests:
             return data
 
     @staticmethod
-    async def post(ses, url:str, **kwargs):
-        async with ses.get(url, **kwargs) as r:
-            data = await r.json()
-            return data
-
-    @staticmethod
     async def patch(ses, url:str, **kwargs):
         async with ses.patch(url, **kwargs) as r:
             data = await r.json()
