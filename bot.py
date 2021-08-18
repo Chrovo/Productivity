@@ -1,12 +1,17 @@
-import discord
 import os
 import json
+
+import discord
 import aiohttp
-from discord.ext import commands, tasks
-from help import MyMenu, ProductivityHelp
+import asyncpg
+from discord.ext import commands
+
+from help import ProductivityHelp
+
 
 with open("config.json", "r") as f:
     config = json.load(f)
+
 
 class Productivity(commands.Bot):
 
@@ -15,14 +20,20 @@ class Productivity(commands.Bot):
             command_prefix=commands.when_mentioned_or('pr!'), 
             intents=discord.Intents.all(),
             allowed_mentions=discord.AllowedMentions(everyone=False, roles=False, users=True),
-            help_command=ProductivityHelp()
-            ) # Add more stuff later
-        self.db = None # Update later lol
+            help_command=ProductivityHelp(),
+            )
+        self.db = self.loop.run_until_complete(
+            asyncpg.create_pool(
+                database="prodbot", 
+                password=config["POSTGRES_PASSWORD"],
+                user="postgres",
+                )
+            )
         self.session = aiohttp.ClientSession()
     
     async def on_ready(self) -> None:
         print("Bot is ready for use.")
-    
+    '''
     async def on_command_error(self, context, exception):
         embed = discord.Embed(colour = discord.Colour.red())
         if isinstance(exception, commands.CommandOnCooldown):
@@ -33,17 +44,22 @@ class Productivity(commands.Bot):
             You are missing the '{exception.param}' parameter!\n
             **Usage**: pr!{context.command.qualified_name} {context.command.signature}
             """
-            await context.send(embed=embed) # Add more stuff later
+            await context.send(embed=embed)
+        elif isinstance(exception, commands.BadArgument):
+            embed.title = "Bad Argument"
+            embed.description = "Please send a valid argument!"
+            await context.send(embed=embed)
         elif isinstance(exception, commands.CommandNotFound):
             pass
         elif isinstance(exception, commands.NotOwner):
             await context.send("You are not the owner of this bot! This command is an owner only command!")
         else:
             raise exception
+        '''
 
 bot = Productivity()
 
-@bot.command()
+@bot.command(aliases=['r'])
 @commands.is_owner()
 async def reload(ctx, ext):
     bot.reload_extension("cogs."+ext)

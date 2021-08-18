@@ -1,15 +1,15 @@
-import discord # Ill make PEP8 for imports better later
-import aiohttp
 import inspect
 import re
-import zlib
-import asyncio
 import time
-from discord.ext import commands, tasks
-from typing import Optional
+import zlib
 from io import BytesIO
+from typing import Optional
+
+import discord
+from discord.ext import commands
 
 from .utils.request import Requests
+
 
 class ComputerScience(commands.Cog):
     """Computer Science/Programming/Coding commands."""
@@ -150,26 +150,23 @@ class ComputerScience(commands.Cog):
 
         start = time.perf_counter()
 
-        async with self.bot.session.post(
+        data = await Requests.post(
+            self.bot.session, 
             "https://emkc.org/api/v1/piston/execute", 
-            data={
-                "source":code, 
-                "language":language,
-            }
-        ) as r:
+            data={"source":code, "language":language,},
+            )
 
-            end = time.perf_counter()
+        end = time.perf_counter()
 
-            data = await r.json()
-            output = data.get('output', f'That language is not supported yet! Try these instead: {", ".join(ALL_LANGS)}')
+        output = data.get('output', f'That language is not supported yet! Try these instead: {", ".join(ALL_LANGS)}')
 
-            return await ctx.send(
-                f"```{output}```", 
-                embed=discord.Embed(
-                    description=f"""Executed in: `{(end - start):.2f}` seconds
-                    \nLanguage: `{data.get('language', "N/A")} version {data.get('version', 'N/A')}`"""
-                    )
+        return await ctx.send(
+            f"```{output}```", 
+            embed=discord.Embed(
+                description=f"""Executed in: `{(end - start):.2f}` seconds
+                \nLanguage: `{data.get('language', "N/A")} version {data.get('version', 'N/A')}`"""
                 )
+            )
 
 
 def setup(bot):

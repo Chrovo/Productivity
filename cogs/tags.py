@@ -1,5 +1,6 @@
 import discord
-from discord.ext import commands, tasks
+import asyncpg
+from discord.ext import commands
 
 class Tags(commands.Cog):
     """Productivity's tag system."""
