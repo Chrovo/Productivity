@@ -5,7 +5,10 @@ from io import BytesIO
 import discord
 from discord.ext import commands
 from matplotlib import pyplot as plt
+from rply import LexingError, ParsingError
 
+from .utils.lexer import l
+from .utils.parsers_ import parser
 
 class Math(commands.Cog):
     """Math commands."""
@@ -61,88 +64,18 @@ class Math(commands.Cog):
 
         await ctx.send(file=img)
 
-    def pemdas(self, expr:str) -> list:
-        """This function will return a list in the order 
-        you are supposed to solve an expression, eg.) 
-        the expression '1 + 2(2/3)' will return 
-        [2, operator.truediv, 3, operator.mul, 2, operator.add, 1]
-        which is found by PEMDAS.
-        """
-        results = []
-
-        #Problem: It interprets 1 + 2 * 3 as ['2', '*', '3', '1', '+', '2'] meaning, the 2 is repeated, causing the problems to be wrong
-        #fix later cus lazy atm, also this code doesnt look very nice so I will try to simplify it later
-
-        EXPONENT_REGEX = re.compile(r"[0-9 ]+[\.]?[0-9 ]+\^[0-9 ]+[\.]?[0-9 ]+")
-        MULTIPLICATION_REGEX = re.compile(r"[0-9 ]+[\.]?[0-9 ]\*[0-9 ]+[\.]?[0-9 ]+")
-        DIVISION_REGEX = re.compile(r"[0-9 ]+[\.]?[0-9 ]\/[0-9 ]+[\.]?[0-9 ]+")
-        ADDITION_REGEX = re.compile(r"[0-9 ]+[\.]?[0-9 ]\+[0-9 ]+[\.]?[0-9 ]+")
-        SUBTRACTION_REGEX = re.compile(r"[0-9 ]+[\.]?[0-9 ]\-[0-9 ]+[\.]?[0-9 ]+")
-
-        exponent = re.finditer(EXPONENT_REGEX, expr)
-        multiplication = re.finditer(MULTIPLICATION_REGEX, expr)
-        division = re.finditer(DIVISION_REGEX, expr)
-        addition = re.finditer(ADDITION_REGEX, expr)
-        subtraction = re.finditer(SUBTRACTION_REGEX, expr)
-
-        all_operators = [exponent, multiplication, division, addition, subtraction]
-
-        for operator in all_operators:
-            for matchobj in operator:
-                end = matchobj.end()
-                start = matchobj.start()
-                sliced = expr[start:end].replace(" ", "")
-
-                for char in list(sliced):
-                    results.append(char)
-
-        return results
+    @commands.command(description="Graph and expression!")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def expr(self, ctx, *, expr:str):
+        pass
 
     @commands.command(description="Calculate an expression!", aliases=["calculate", "calculator"])
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def calc(self, ctx, *, expr:str):
-        list_expression = self.pemdas(expr)
-
-        OPERATORS = {
-            '+':operator.add, 
-            '-':operator.sub, 
-            '/':operator.truediv, 
-            '*':operator.mul, 
-            '^':pow,
-            }
-
-        expression = []
-
         try:
-
-            for char in list_expression:
-                try:
-                    expression.append(OPERATORS[char])
-                except KeyError:
-                    expression.append(float(char))
-
-            for index, character in enumerate(expression):
-                if not isinstance(character, float):
-
-                    try:
-                        answer = character(expression[index-1], expression[index+1])
-
-                        expression.pop(index+1)
-                        expression.pop(index)
-                        expression.pop(index-1)
-
-                        expression.insert(index-1, answer)
-                    except IndexError:
-                        continue
-
-                else:
-                    continue
-            
-            total = sum(expression)
-
-            return await ctx.send(f"{expr} = {total}")
-
-        except Exception:
+            results = parser.parse(l.lex(expr))._eval()
+            return await ctx.send(results)
+        except (LexingError, ParsingError):
             return await ctx.send("Invalid Equation!")
 
 

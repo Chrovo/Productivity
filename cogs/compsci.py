@@ -3,12 +3,13 @@ import re
 import time
 import zlib
 from io import BytesIO
-from typing import Optional
+from typing import Optional, Union
 
 import discord
 from discord.ext import commands
 
 from .utils.request import Requests
+from .utils.converters import CodeblockConverter
 
 
 class ComputerScience(commands.Cog):
@@ -22,13 +23,13 @@ class ComputerScience(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def source(self, ctx, command:Optional[str]=None):
         if not command:
-            await ctx.send("Here is the GitHub repository: https://github.com/Chrovo/Productivity/tree/master")
+            await ctx.send("Here is the GitHub repository: https://github.com/Chrovo/Productivity")
 
         elif command.lower() == "help":
-            return await ctx.send("https://github.com/Chrovo/Productivity/blob/master/help.py#L60-L87")
+            return await ctx.send("https://github.com/Chrovo/Productivity/blob/main/help.py#L69-L117")
 
         else:
-            base_url = "https://github.com/Chrovo/Productivity/blob/master"
+            base_url = "https://github.com/Chrovo/Productivity/blob/main"
             cmd = self.bot.get_command(command)
 
             if not cmd:
@@ -40,10 +41,10 @@ class ComputerScience(commands.Cog):
             base_url+=f"{srcfile}#L{starterline}-L{len(codelines)+starterline}"
 
             await ctx.send(base_url)
-    
+
     @commands.command(description="Search through documentations!", aliases=['docs', 'documentation', 'rtfd'])
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def rtfm(self, ctx, lib:str, search:str):
+    async def rtfm(self, ctx, lib:str, search:str): # cache stuff later
         ALL_LIBS = {
             "python":"https://docs.python.org/3/objects.inv",
             'dpy':"https://discordpy.readthedocs.io/en/latest/objects.inv",
@@ -109,8 +110,8 @@ class ComputerScience(commands.Cog):
     @commands.command(aliases=["PyPi"], description="Search for something on PyPi")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def pypi(self, ctx, *, lib:str):
-        libsplit = lib.split()
-        pypilink = f"https://pypi.org/pypi/{'-'.join(libsplit)}/json"
+        lib = lib.replace(" ", "-")
+        pypilink = f"https://pypi.org/pypi/{lib}/json"
         data = await Requests.get(self.bot.session, pypilink)
 
         if not data:
@@ -123,7 +124,7 @@ class ComputerScience(commands.Cog):
         desc = libinfo["description"] or "Unknown"
         num = len(desc) if len(desc) < 200 else 200
 
-        em = discord.Embed(title = "Pypi search results", description = f"Searches {'-'.join(libsplit)}")
+        em = discord.Embed(title = "Pypi search results", description = f"Searches {lib}")
         em.set_thumbnail(url="https://1.bp.blogspot.com/-3vjua3XTKXY/XA-QFPCIdII/AAAAAAAAVAg/i3Gpp6O3gyYO4hNW25DJ4lGy2nSc3R_6wCLcBGAs/s1600/pypi.png")
         em.add_field(name="Author", value=author, inline=False)
         em.add_field(name="Author Email", value=email, inline=False)
@@ -134,19 +135,9 @@ class ComputerScience(commands.Cog):
 
     @commands.command(aliases=["eval", "run"], description="Run a piece of code!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def _eval(self, ctx, language:str, *, code:str):
+    async def _eval(self, ctx, language:str, *, code:CodeblockConverter):
         lang_data = await Requests.get(self.bot.session, "https://emkc.org/api/v2/piston/runtimes")
         ALL_LANGS = [lang['language'] for lang in lang_data]
-        ALL_ALIASES = []
-        for dictionary in lang_data:
-            aliases = dictionary.get('aliases')
-            if aliases:
-                for alias in aliases:
-                    ALL_ALIASES.append(alias)
-
-        nocbcode = discord.utils.remove_markdown(code)
-        firstword = nocbcode.split()[0]
-        code = nocbcode[len(firstword):] if firstword in ALL_ALIASES or firstword in ALL_LANGS else nocbcode
 
         start = time.perf_counter()
 

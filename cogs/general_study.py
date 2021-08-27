@@ -6,6 +6,7 @@ import discord
 from discord.ext import commands
 
 from .utils.converters import TimeConverter
+from .utils.pagination import create_paginated_embed
 
 
 class GeneralStudy(commands.Cog):
@@ -63,7 +64,7 @@ class GeneralStudy(commands.Cog):
             name, content = flashcard.split("|")
         except ValueError:
             return await ctx.send("You must seperate your flashcard's name and flashcard's content with a `|`")
-        # add something to get the studyset id later
+ 
         query = """
         INSERT INTO flashcards (studyset_id, flashcard_name, flashcard_content)
         VALUES ($1, $2, $3);
@@ -108,10 +109,62 @@ class GeneralStudy(commands.Cog):
         await self.bot.db.execute(query, ctx.author.id, studyset)
         await ctx.send(f"Studyset '{studyset}' created!")
 
-    @flashcards.command(description="Study your cards!")
+    @flashcards.command(description="Study your cards! This uses active recall to help you study efficiently!")
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def study(self, ctx, studyset:str):
-        pass
+        async with self.bot.db.acquire() as connection:
+            async with connection.transaction():
+                studyset_id = await self._get_studyset_id(studyset, ctx.author.id)
+                query = """
+                SELECT * FROM flashcards
+                WHERE studyset_id = $1;
+                """
+                output = await connection.fetch(query, studyset_id)
+
+                def check(reaction, user):
+                    return user == ctx.author and str(reaction.emoji) in REACTIONS
+
+                good:list[asyncpg.Record] = []
+                ok:list[asyncpg.Record] = []
+                bad:list[asyncpg.Record] = []
+                REACTIONS = ['❌', '🤷', '✅', '⏹️']
+                CONVERSIONS = {'❌':bad, '🤷':ok, '✅':good}
+                index = 0
+                
+                message = await ctx.send(f"{output[index]['flashcard_name']} ||{output[index]['flashcard_content']}||")
+
+                for react in REACTIONS:
+                    await message.add_reaction(react)
+
+                while ok != 0 or bad != 0 or output != 0:
+                    latest_list = output if output else bad or ok
+
+                    reaction, user = await self.bot.wait_for("reaction_add", check=check)
+
+                    try:
+                        await message.remove_reaction(reaction, user)
+                    except discord.Forbidden:
+                        pass
+
+                    if str(reaction.emoji) == '⏹️':
+                        return await message.delete()
+                    try:
+                        CONVERSIONS[str(reaction.emoji)].append(latest_list[index])
+                    except IndexError:
+                        break
+                    
+                    latest_list.pop(index)
+
+                    latest_list = output if output else bad or ok
+                    try:
+                        name = latest_list[index]['flashcard_name']
+                        content = latest_list[index]['flashcard_content']
+                    except IndexError:
+                        pass
+
+                    await message.edit(content=f"{name} ||{content}||")
+                
+                return await message.edit(content=f"Nice! You studied {len(good)} flashcards!")
 
     @flashcards.command(description="Start your use of flashcard commands.")
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -140,12 +193,15 @@ class GeneralStudy(commands.Cog):
                 """
                 studysets = await connection.fetch(query, (member.id))
 
-                embed = discord.Embed(title=f"{member}'s studysets!")
-                embed.description = f"{member} has {len(studysets)} studysets!\n"
-                for match in studysets:
-                    embed.description+=f"- `{match['studyset_name']}`\n"
-                
-                return await ctx.send(embed=embed)
+                paginated_list = create_paginated_embed(
+                    ctx, 
+                    studysets, 
+                    "studyset_name", 
+                    f"{member}'s studysets!", 
+                    member.avatar_url, member
+                    )
+
+                await paginated_list.start(ctx)
 
     @flashcards.command(description="Update a studyset's name!")
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -157,6 +213,31 @@ class GeneralStudy(commands.Cog):
         """
         await self.bot.db.execute(query, new_name, ctx.author.id, studyset)
         return await ctx.send(f"Successfully updated studyset '{studyset}'! It's new name is '{new_name}'!")
+
+    @flashcards.command(description="Update a flashcard!")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def update(self, ctx, studyset:str, *, flashcard:str):
+        try:
+            before_name, after = flashcard.split(",")
+            name, content = after.split("|")
+        except ValueError:
+            return await ctx.send(
+                """
+                You must seperate your old flashcard's name and new flashcard details with a `,`.
+                Additionally, you must split your updated flashcard's details with a `|`\n
+                For example: 
+                pr!flashcards update studyset_name old_flashcard_name,new_flashcard_name|new_flashcard_content
+                """
+            )
+        
+        query = """
+        UPDATE flashcards
+        SET flashcard_name = $1, flashcard_content = $2
+        WHERE studyset_id = $3 AND flashcard_name = $4;
+        """
+        studyset_id = await self._get_studyset_id(studyset, ctx.author.id)
+        await self.bot.db.execute(query, name, content, studyset_id, before_name)
+        return await ctx.send("Successfully updated flashcard!")
 
 def setup(bot):
     bot.add_cog(GeneralStudy(bot))
