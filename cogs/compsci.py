@@ -3,7 +3,7 @@ import re
 import time
 import zlib
 from io import BytesIO
-from typing import Optional, Union
+from typing import Optional
 
 import discord
 from discord.ext import commands
@@ -15,13 +15,13 @@ from .utils.converters import CodeblockConverter
 class ComputerScience(commands.Cog):
     """Computer Science/Programming/Coding commands."""
 
-    def __init__(self, bot:commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.emoji = "💻" # create custom emojis later I guess.
 
-    @commands.command(aliases=["src"], description="This will return the source code of Productivity")
+    @commands.command(aliases=("src",), description="This will return the source code of Productivity")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def source(self, ctx, command:Optional[str]=None):
+    async def source(self, ctx: commands.Context, command: Optional[str] = None):
         if not command:
             await ctx.send("Here is the GitHub repository: https://github.com/Chrovo/Productivity")
 
@@ -42,9 +42,9 @@ class ComputerScience(commands.Cog):
 
             await ctx.send(base_url)
 
-    @commands.command(description="Search through documentations!", aliases=['docs', 'documentation', 'rtfd'])
+    @commands.command(description="Search through documentations!", aliases=('docs', 'documentation', 'rtfd',))
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def rtfm(self, ctx, lib:str, search:str): # cache stuff later
+    async def rtfm(self, ctx: commands.Context, lib: str, search: str): # cache stuff later
         ALL_LIBS = {
             "python":"https://docs.python.org/3/objects.inv",
             'dpy':"https://discordpy.readthedocs.io/en/latest/objects.inv",
@@ -89,9 +89,9 @@ class ComputerScience(commands.Cog):
 
             return await ctx.send(embed=embed)
 
-    @commands.command(aliases=['gitsearch'], description="Search for a user on GitHub!")
+    @commands.command(aliases=('gitsearch',), description="Search for a user on GitHub!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def github(self, ctx, *, user):
+    async def github(self, ctx: commands.Context, *, user: str):
         user = user.split()
         link = f"https://api.github.com/users/{'-'.join(user)}"
 
@@ -107,9 +107,9 @@ class ComputerScience(commands.Cog):
 
         return await ctx.send(embed=em)
 
-    @commands.command(aliases=["PyPi"], description="Search for something on PyPi")
+    @commands.command(aliases=("PyPi",), description="Search for something on PyPi")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def pypi(self, ctx, *, lib:str):
+    async def pypi(self, ctx: commands.Context, *, lib: str):
         lib = lib.replace(" ", "-")
         pypilink = f"https://pypi.org/pypi/{lib}/json"
         data = await Requests.get(self.bot.session, pypilink)
@@ -133,9 +133,9 @@ class ComputerScience(commands.Cog):
 
         return await ctx.send(embed=em)
 
-    @commands.command(aliases=["eval", "run"], description="Run a piece of code!")
+    @commands.command(aliases=("eval", "run",), description="Run a piece of code!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def _eval(self, ctx, language:str, *, code:CodeblockConverter):
+    async def _eval(self, ctx, language: str, *, code: CodeblockConverter):
         lang_data = await Requests.get(self.bot.session, "https://emkc.org/api/v2/piston/runtimes")
         ALL_LANGS = [lang['language'] for lang in lang_data]
 
@@ -160,5 +160,5 @@ class ComputerScience(commands.Cog):
             )
 
 
-def setup(bot):
-    bot.add_cog(ComputerScience(bot))
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(ComputerScience(bot))

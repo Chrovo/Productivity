@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from cogs.utils.pagination import Pagination
+from cogs.utils.pagination import Pagination # type: ignore
 
 
 class ProductivityHelp(commands.HelpCommand):
@@ -9,7 +9,7 @@ class ProductivityHelp(commands.HelpCommand):
     super().__init__(
       command_attrs={
         'description':'A command that sends help and information about the other commands!', 
-        'cooldown':commands.Cooldown(1, 5, commands.BucketType.user),
+        'cooldown':commands.CooldownMapping.from_cooldown(1, 5, commands.BucketType.user),
         }
       )
 
@@ -19,9 +19,9 @@ class ProductivityHelp(commands.HelpCommand):
     owner = (await ctx.bot.application_info()).owner
 
     embed = discord.Embed(title="Help Command", description="Do pr!help [command or category] for help on a specific category or command!")
-    embed.set_author(name="Chrovo#9488", icon_url=owner.avatar_url)
-    embed.set_footer(text=f"Requested by: {ctx.author}", icon_url=ctx.author.avatar_url)
-    embed.set_thumbnail(url=ctx.me.avatar_url)
+    embed.set_author(name="Chrovo#9488", icon_url=owner.default_avatar.url)
+    embed.set_footer(text=f"Requested by: {ctx.author}", icon_url=ctx.author.default_avatar.url)
+    embed.set_thumbnail(url=ctx.me.default_avatar.url)
     embed.add_field(name="Categories", value='\n'.join(["❱ "+cog.emoji+cog.qualified_name for cog in ctx.bot.cogs.values()]))
 
     self.embeds.insert(0, embed)
@@ -40,8 +40,8 @@ class ProductivityHelp(commands.HelpCommand):
       )
 
     embed.set_author(name="Chrovo#9488", icon_url="https://cdn.discordapp.com/avatars/615975131881144333/7d3bc639d2da754cc83b00412500e0cd.webp?size=1024") #shush
-    embed.set_thumbnail(url=self.context.me.avatar_url)
-    embed.set_footer(text=f"Requested by: {self.context.author}", icon_url=self.context.author.avatar_url)
+    embed.set_thumbnail(url=self.context.me.default_avatar.url)
+    embed.set_footer(text=f"Requested by: {self.context.author}", icon_url=self.context.author.default_avatar.url)
     return embed
   
   async def send_cog_help(self, cog):
@@ -56,9 +56,9 @@ class ProductivityHelp(commands.HelpCommand):
         +"```"
       )
   
-    embed.set_author(name="Chrovo#9488", icon_url=owner.avatar_url)
-    embed.set_thumbnail(url=self.context.me.avatar_url)
-    embed.set_footer(text=f"Requested by: {self.context.author}", icon_url=self.context.author.avatar_url)
+    embed.set_author(name="Chrovo#9488", icon_url=owner.default_avatar.url)
+    embed.set_thumbnail(url=self.context.me.default_avatar.url)
+    embed.set_footer(text=f"Requested by: {self.context.author}", icon_url=self.context.author.default_avatar.url)
 
     return await self.context.send(embed=embed)
 
@@ -69,7 +69,7 @@ class ProductivityHelp(commands.HelpCommand):
     if command.aliases:
       embed.add_field(name="Aliases", value=", ".join(command.aliases), inline=False)
     
-    embed.set_footer(text="[] means that the part is optional, and <> means that it is required!", icon_url=self.context.me.avatar_url)
+    embed.set_footer(text="[] means that the part is optional, and <> means that it is required!", icon_url=self.context.me.default_avatar.url)
 
     return await self.context.send(embed=embed)
 

@@ -1,8 +1,9 @@
-from typing import Union, Optional, TYPE_CHECKING
+from typing import Union, Optional
 
 import asyncpg
 import discord
 from discord.ext import commands, menus
+
 
 class Pagination(menus.Menu):
 

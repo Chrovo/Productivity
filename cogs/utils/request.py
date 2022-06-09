@@ -1,4 +1,8 @@
-import aiohttp
+# fmt: off
+__all__ = (
+    'Requests',
+)
+# fmt: on
 
 class Requests:
 

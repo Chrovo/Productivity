@@ -12,19 +12,19 @@ from .utils.pagination import create_paginated_embed
 class GeneralStudy(commands.Cog):
     """General commands and Study commands."""
 
-    def __init__(self, bot:commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.emoji = "🧠" # create custom emojis later I guess.
 
-    @commands.command(aliases=['remindme', 'remind'], description="Set a reminder for something!")
+    @commands.command(aliases=('remindme', 'remind',), description="Set a reminder for something!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def reminder(self, ctx, time:TimeConverter, *, task:str):
+    async def reminder(self, ctx: commands.Context,time: TimeConverter, *, task: str):
         await discord.utils.sleep_until(time)
         await ctx.send(f"**Reminder**\n{ctx.author.mention}\nTask: {task}")
 
-    @commands.command(aliases=['pomo'], description="Set a pomodoro timer!")
+    @commands.command(aliases=('pomo',), description="Set a pomodoro timer!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def pomodoro(self, ctx, times_repeated:int=1):
+    async def pomodoro(self, ctx: commands.Context,times_repeated:int=1):
         num = times_repeated if times_repeated > 0 else 1
         
         if num > 5:
@@ -40,7 +40,7 @@ class GeneralStudy(commands.Cog):
 
         return await ctx.send("Your pomodoro timer loop has ended! Good luck for whatever you were studying for!")
     
-    async def _get_studyset_id(self, name:str, user_id:int) -> int:
+    async def _get_studyset_id(self, name: str, user_id: int) -> int:
         async with self.bot.db.acquire() as connection:
             async with connection.transaction():
                 query = """
@@ -53,13 +53,13 @@ class GeneralStudy(commands.Cog):
 
     @commands.group(invoke_without_command=True)
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def flashcards(self, ctx):
+    async def flashcards(self, ctx: commands.Context):
         """A flashcard system to study with!"""
         pass
 
     @flashcards.command(description="Add a flashcard to a studyset")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def add(self, ctx, studyset:str, *, flashcard:str):
+    async def add(self, ctx: commands.Context,studyset:str, *, flashcard:str):
         try:
             name, content = flashcard.split("|")
         except ValueError:
@@ -75,7 +75,7 @@ class GeneralStudy(commands.Cog):
     
     @flashcards.command(description="Remove a flashcard from a studyset")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def remove(self, ctx, studyset:str, *, flashcard:str):
+    async def remove(self, ctx: commands.Context,studyset: str, *, flashcard: str):
         query = """
         DELETE FROM flashcards
         WHERE flashcard_name = $1 AND studyset_id = $2;
@@ -91,7 +91,7 @@ class GeneralStudy(commands.Cog):
 
     @flashcards.command(description="Delete a study set!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def delete(self, ctx, studyset:str):
+    async def delete(self, ctx: commands.Context,studyset: str):
         query = """
         DELETE FROM studyset 
         WHERE studyset_name = $1 AND user_id = $2; 
@@ -101,7 +101,7 @@ class GeneralStudy(commands.Cog):
 
     @flashcards.command(description="Create a studyset!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def create(self, ctx, studyset:str):
+    async def create(self, ctx: commands.Context, studyset: str):
         query = """
             INSERT INTO studyset (user_id, studyset_name)
             VALUES ($1, $2);
@@ -111,7 +111,7 @@ class GeneralStudy(commands.Cog):
 
     @flashcards.command(description="Study your cards! This uses active recall to help you study efficiently!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def study(self, ctx, studyset:str):
+    async def study(self, ctx: commands.Context, studyset: str):
         async with self.bot.db.acquire() as connection:
             async with connection.transaction():
                 studyset_id = await self._get_studyset_id(studyset, ctx.author.id)
@@ -168,7 +168,7 @@ class GeneralStudy(commands.Cog):
 
     @flashcards.command(description="Start your use of flashcard commands.")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def start(self, ctx):
+    async def start(self, ctx: commands.Context):
         query = """
             INSERT INTO users (user_id, username)
             VALUES ($1, $2);
@@ -182,7 +182,7 @@ class GeneralStudy(commands.Cog):
 
     @flashcards.command(description="All of the studysets a user can own.")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def studysets(self, ctx, member:Optional[commands.MemberConverter]=None):
+    async def studysets(self, ctx: commands.Context, member: Optional[commands.MemberConverter] = None):
         member = member or ctx.author
 
         async with self.bot.db.acquire() as connection:
@@ -194,18 +194,18 @@ class GeneralStudy(commands.Cog):
                 studysets = await connection.fetch(query, (member.id))
 
                 paginated_list = create_paginated_embed(
-                    ctx, 
+                    ctx,
                     studysets, 
                     "studyset_name", 
                     f"{member}'s studysets!", 
-                    member.avatar_url, member
+                    member.avatar.url, member
                     )
 
                 await paginated_list.start(ctx)
 
     @flashcards.command(description="Update a studyset's name!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def edit(self, ctx, studyset:str, new_name:str):
+    async def edit(self, ctx: commands.Context, studyset: str, new_name: str):
         query = """
         UPDATE studyset
         SET studyset_name = $1
@@ -216,7 +216,7 @@ class GeneralStudy(commands.Cog):
 
     @flashcards.command(description="Update a flashcard!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def update(self, ctx, studyset:str, *, flashcard:str):
+    async def update(self, ctx: commands.Context,studyset:str, *, flashcard:str):
         try:
             before_name, after = flashcard.split(",")
             name, content = after.split("|")
@@ -239,5 +239,5 @@ class GeneralStudy(commands.Cog):
         await self.bot.db.execute(query, name, content, studyset_id, before_name)
         return await ctx.send("Successfully updated flashcard!")
 
-def setup(bot):
-    bot.add_cog(GeneralStudy(bot))
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(GeneralStudy(bot))

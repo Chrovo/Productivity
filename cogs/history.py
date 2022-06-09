@@ -8,5 +8,5 @@ class History(commands.Cog):
         self.bot = bot
         self.emoji = "🗺️" # create custom emojis later I guess.
 
-def setup(bot):
-    bot.add_cog(History(bot))
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(History(bot))

@@ -1,5 +1,3 @@
-import operator
-import re
 from io import BytesIO
 
 import discord
@@ -66,7 +64,7 @@ class Math(commands.Cog):
 
     @commands.command(description="Graph and expression!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def expr(self, ctx, *, expr:str):
+    async def expr(self, ctx, *, expr: str):
         pass
 
     @commands.command(description="Calculate an expression!", aliases=["calculate", "calculator"])
@@ -79,5 +77,5 @@ class Math(commands.Cog):
             return await ctx.send("Invalid Equation!")
 
 
-def setup(bot):
-    bot.add_cog(Math(bot))
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(Math(bot))

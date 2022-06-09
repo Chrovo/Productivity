@@ -98,7 +98,10 @@ class Tags(commands.Cog):
                 """
                 tags = await connection.fetch(query, member.id, ctx.guild.id)
 
-                paginate = create_paginated_embed(ctx, tags, 'tag_name', f"{member}'s tags", member.avatar_url, member.name)
+                if not tags:
+                    return await ctx.send('User has no tags!')
+
+                paginate = create_paginated_embed(ctx, tags, 'tag_name', f"{member}'s tags", member.avatar.url, member.name)
                 await paginate.start(ctx)
 
     @tag.command(description="Edit a tag!")
@@ -136,12 +139,12 @@ class Tags(commands.Cog):
 
                     embed = discord.Embed(title=tag_info['tag_name'])
                     embed.add_field(name="Owner", value=owner.mention)
-                    embed.set_author(name=owner, icon_url=owner.avatar_url)
+                    embed.set_author(name=owner, icon_url=owner.avatar.url)
 
                     return await ctx.send(embed=embed)
 
                 except TypeError:
                     return await ctx.send("Tag not found.")
 
-def setup(bot:commands.Bot):
-    bot.add_cog(Tags(bot))
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(Tags(bot))

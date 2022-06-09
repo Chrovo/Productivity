@@ -34,13 +34,16 @@ class Todo(commands.Cog):
                 WHERE user_id = $1;
                 """
                 todo_list = await connection.fetch(query, ctx.author.id)
+
+                if not todo_list:
+                    return await ctx.send('User has no tags!')
                 
                 paginated = create_paginated_embed(
                     ctx, 
                     todo_list, 
                     "todo_content", 
                     f"{ctx.author}'s todo list!", 
-                    ctx.author.avatar_url, 
+                    ctx.author.avatar.url, 
                     ctx.author,
                     )
                 await paginated.start(ctx)
@@ -116,5 +119,5 @@ class Todo(commands.Cog):
         except Exception:
             return await ctx.send("Could not update the priority.")
 
-def setup(bot):
-    bot.add_cog(Todo(bot))
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(Todo(bot))
