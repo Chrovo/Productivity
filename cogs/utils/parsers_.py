@@ -1,7 +1,7 @@
 from typing import Union
 
-from rply import ParserGenerator
-from rply.token import BaseBox
+from rply import ParserGenerator # type: ignore
+from rply.token import BaseBox # type: ignore
 
 # the Abstract Syntax Tree for it, it uses polymorphism
 

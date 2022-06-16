@@ -1,10 +1,9 @@
 from typing import Optional
 
 import discord
-import asyncpg
 from discord.ext import commands
 
-from .utils.pagination import create_paginated_embed
+from .utils.pagination import create_paginated_embed # type: ignore
 
 class Tags(commands.Cog):
     """Productivity's tag system."""

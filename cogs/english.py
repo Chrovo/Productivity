@@ -1,7 +1,4 @@
-import discord
 from discord.ext import commands
-
-from .utils.request import Requests
 
 class English(commands.Cog):
     """English/Writing/Reading commands."""

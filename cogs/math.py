@@ -2,20 +2,20 @@ from io import BytesIO
 
 import discord
 from discord.ext import commands
-from matplotlib import pyplot as plt
-from rply import LexingError, ParsingError
+from matplotlib import pyplot as plt # type: ignore
+from rply import LexingError, ParsingError # type: ignore
 
-from .utils.lexer import l
-from .utils.parsers_ import parser
+from .utils.lexer import l # type: ignore
+from .utils.parsers_ import parser # type: ignore
 
 class Math(commands.Cog):
     """Math commands."""
 
-    def __init__(self, bot:commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.emoji = "🔢" # create custom emojis later I guess.
 
-    def save_plt(self, _plt, name:str) -> discord.File:
+    def save_plt(self, _plt, name: str) -> discord.File:
         _bytes = BytesIO()
         _plt.savefig(_bytes)
         _plt.close()
@@ -25,7 +25,7 @@ class Math(commands.Cog):
 
     @commands.command(description="Graph a linear function!")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def linear(self, ctx, slope:float, y_intercept:float):
+    async def linear(self, ctx, slope: float, y_intercept: float):
         x = list(range(-10, 11))
         y = [(slope*x_val)+y_intercept for x_val in x]
 
@@ -51,7 +51,7 @@ class Math(commands.Cog):
 
     @commands.command(description="Graph a exponential function")
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def exponential(self, ctx, a:float, b:float):
+    async def exponential(self, ctx, a: float, b: float):
         x = list(range(-10, 11))
         y = [a*b**x_val for x_val in x]
 
@@ -69,7 +69,7 @@ class Math(commands.Cog):
 
     @commands.command(description="Calculate an expression!", aliases=["calculate", "calculator"])
     @commands.cooldown(1, 5, commands.BucketType.user)
-    async def calc(self, ctx, *, expr:str):
+    async def calc(self, ctx, *, expr: str):
         try:
             results = parser.parse(l.lex(expr))._eval()
             return await ctx.send(results)

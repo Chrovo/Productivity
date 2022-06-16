@@ -1,8 +1,6 @@
-import asyncpg
-import discord
 from discord.ext import commands
 
-from .utils.pagination import create_paginated_embed
+from .utils.pagination import create_paginated_embed # type: ignore
 
 class Todo(commands.Cog):
 

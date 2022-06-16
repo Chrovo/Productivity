@@ -1,10 +1,9 @@
-from rply import LexerGenerator
+from rply import LexerGenerator # type: ignore
 
 # lexer for the "calc" command
 lg = LexerGenerator()
 
 lg.add('NUMBER', r'[0-9]+[\.]?[0-9]*') # number token
-
 lg.add('ADDITION', r'\+') # operator tokens
 lg.add('SUBTRACTION', r'-')
 lg.add('MULTIPLICATION', r'\*')

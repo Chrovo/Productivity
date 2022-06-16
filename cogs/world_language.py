@@ -1,4 +1,3 @@
-import discord
 from discord.ext import commands
 
 class WorldLanguage(commands.Cog): #might remove this cog

@@ -82,7 +82,7 @@ bot = Productivity()
 @bot.command(aliases=("r",))
 @commands.is_owner()
 async def reload(ctx: commands.Context, ext: str):
-    bot.reload_extension(f"cogs.{ext}")
+    await bot.reload_extension(f"cogs.{ext}")
     await ctx.send(f"Cog {ext} has been reloaded")
 
 bot.run(config["TOKEN"])

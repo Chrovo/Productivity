@@ -9,8 +9,8 @@ class Pagination(menus.Menu):
 
     def __init__(
         self, 
-        ctx:commands.Context, *, 
-        messages:list[Union[discord.Message, discord.Embed]]
+        ctx: commands.Context, *, 
+        messages: list[Union[discord.Message, discord.Embed]]
         ) -> None:
             super().__init__()
             self.ctx = ctx
@@ -19,9 +19,9 @@ class Pagination(menus.Menu):
 
     async def _embed_or_message(
         self, *, 
-        message:Union[discord.Message, discord.Embed], 
-        action:str, 
-        channel:discord.TextChannel
+        message: Union[discord.Message, discord.Embed], 
+        action: str, 
+        channel: discord.TextChannel
         ) -> None:
             ACTIONS = {"edit":self.message.edit, "send":channel.send,}
 

@@ -5,8 +5,8 @@ import asyncpg
 import discord
 from discord.ext import commands
 
-from .utils.converters import TimeConverter
-from .utils.pagination import create_paginated_embed
+from .utils.converters import TimeConverter # type: ignore
+from .utils.pagination import create_paginated_embed # type: ignore
 
 
 class GeneralStudy(commands.Cog):

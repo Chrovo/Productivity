@@ -1,4 +1,5 @@
 import inspect
+import pydoc
 import re
 import time
 import zlib
@@ -8,8 +9,14 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
-from .utils.request import Requests
-from .utils.converters import CodeblockConverter
+from .utils.request import Requests # type: ignore
+from .utils.converters import CodeblockConverter # type: ignore
+
+class Writeable:
+    def __init__(self) -> None:
+        self.str = ''
+    def write(self, writing) -> None:
+        self.str += discord.utils.escape_markdown(writing)
 
 
 class ComputerScience(commands.Cog):
@@ -46,8 +53,8 @@ class ComputerScience(commands.Cog):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def rtfm(self, ctx: commands.Context, lib: str, search: str): # cache stuff later
         ALL_LIBS = {
-            "python":"https://docs.python.org/3/objects.inv",
-            'dpy':"https://discordpy.readthedocs.io/en/latest/objects.inv",
+            'python':'https://docs.python.org/3/objects.inv',
+            'dpy':'https://discordpy.readthedocs.io/en/latest/objects.inv',
             'requests':'https://docs.python-requests.org/en/latest/objects.inv',
             'pygame':'https://www.pygame.org/docs/objects.inv',
             'lark':'https://lark-parser.readthedocs.io/en/latest/objects.inv',
@@ -57,16 +64,16 @@ class ComputerScience(commands.Cog):
             'pandas':'https://pandas.pydata.org/pandas-docs/stable/objects.inv',
             'asyncpg':'https://magicstack.github.io/asyncpg/current/objects.inv',
             'pillow':'https://pillow.readthedocs.io/en/stable/objects.inv',
+            'pros':'https://pros.cs.purdue.edu/v5/objects.inv',
         }
 
-        try:
-            lib = ALL_LIBS[lib.lower()]
-        except KeyError:
+        lib = ALL_LIBS.get(lib.lower())
+
+        if not lib:
             return await ctx.send(
                 f'That library is not supported yet! Try these instead\n{", ".join(ALL_LIBS.keys())}'
             )
-    
-        embed = discord.Embed(title=f"Documentation search!", description="")
+
         search = re.escape(search)
         async with self.bot.session.get(lib) as r:
             data = BytesIO(await r.read())
@@ -81,13 +88,20 @@ class ComputerScience(commands.Cog):
 
             if not sug:
                 return await ctx.send("Could not find anything.")
-                
+
+            embed = discord.Embed(title=f"Documentation search!", description="")
+
             num_sug = len(sug) if len(sug) < 10 else 10
             
             for j in range(num_sug):
-                embed.description+=f"[`{sug[j].split()[0]}`]({lib[:-11]}{sug[j].split()[-2][:-1]}{sug[j].split()[0]})\n"
+                line = sug[j].split()
+                if lib == 'https://pros.cs.purdue.edu/v5/objects.inv':
+                    embed.description+=f"[`{line[0]}`]({lib[:-11]}{line[3]})\n"
+                else:
+                    embed.description+=f"[`{line[0]}`]({lib[:-11]}{line[-2][:-1]}{line[0]})\n"
 
             return await ctx.send(embed=embed)
+
 
     @commands.command(aliases=('gitsearch',), description="Search for a user on GitHub!")
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -158,6 +172,21 @@ class ComputerScience(commands.Cog):
                 \nLanguage: `{data.get('language', "N/A")} version {data.get('version', 'N/A')}`"""
                 )
             )
+
+    @commands.command()
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def python(self, ctx: commands.Context, query: str):
+        helper = pydoc.Helper(output=Writeable())
+        helper.help(query)
+        output = helper.output.str
+
+        if output == '\n':
+            return await ctx.send('Nothing was found')
+
+        elif len(output) >= 2000:
+            output = output[0:1995]
+        
+        await ctx.send(output)
 
 
 async def setup(bot: commands.Bot) -> None:
