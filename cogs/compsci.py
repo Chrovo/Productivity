@@ -24,6 +24,7 @@ class ComputerScience(commands.Cog):
 
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+        self._cache = {}
         self.emoji = "💻" # create custom emojis later I guess.
 
     @commands.command(aliases=("src",), description="This will return the source code of Productivity")
@@ -33,7 +34,7 @@ class ComputerScience(commands.Cog):
             await ctx.send("Here is the GitHub repository: https://github.com/Chrovo/Productivity")
 
         elif command.lower() == "help":
-            return await ctx.send("https://github.com/Chrovo/Productivity/blob/main/help.py#L69-L117")
+            return await ctx.send("https://github.com/Chrovo/Productivity/blob/main/help.py#L7-L117")
 
         else:
             base_url = "https://github.com/Chrovo/Productivity/blob/main"
@@ -43,7 +44,7 @@ class ComputerScience(commands.Cog):
                 await ctx.send(f'No command called "{command}" found.')
 
             path = inspect.getsourcefile(cmd.callback.__code__)
-            srcfile = path[38:].replace(r'\\', '/')
+            srcfile = path[31:].replace(r'\\', '/')
             codelines, starterline = inspect.getsourcelines(cmd.callback.__code__)
             base_url+=f"{srcfile}#L{starterline}-L{len(codelines)+starterline}"
 
@@ -54,7 +55,8 @@ class ComputerScience(commands.Cog):
     async def rtfm(self, ctx: commands.Context, lib: str, search: str): # cache stuff later
         ALL_LIBS = {
             'python':'https://docs.python.org/3/objects.inv',
-            'dpy':'https://discordpy.readthedocs.io/en/latest/objects.inv',
+            'dpy':'https://discordpy.readthedocs.io/en/stable/objects.inv',
+            'dpy-master':'https://discordpy.readthedocs.io/en/latest/objects.inv',
             'requests':'https://docs.python-requests.org/en/latest/objects.inv',
             'pygame':'https://www.pygame.org/docs/objects.inv',
             'lark':'https://lark-parser.readthedocs.io/en/latest/objects.inv',
@@ -73,35 +75,39 @@ class ComputerScience(commands.Cog):
             return await ctx.send(
                 f'That library is not supported yet! Try these instead\n{", ".join(ALL_LIBS.keys())}'
             )
+        
+        embed = self._cache.get(f'{lib}/{search}')
 
-        search = re.escape(search)
-        async with self.bot.session.get(lib) as r:
-            data = BytesIO(await r.read())
-            decobj = zlib.decompressobj()
+        if not embed:
+            search = re.escape(search)
+            async with self.bot.session.get(lib) as r:
+                data = BytesIO(await r.read())
+                decobj = zlib.decompressobj()
 
-            for i in range(4):
-                data.readline()
+                for i in range(4):
+                    data.readline()
 
-            info = data.read()
-            decompressed = str(decobj.decompress(info)).split('\\n')
-            sug = [line for line in decompressed if re.search(search, line)]
+                info = data.read()
+                decompressed = str(decobj.decompress(info)).split('\\n')
+                sug = [line for line in decompressed if re.search(search, line)]
 
-            if not sug:
-                return await ctx.send("Could not find anything.")
+                if not sug:
+                    return await ctx.send("Could not find anything.")
 
-            embed = discord.Embed(title=f"Documentation search!", description="")
+                embed = discord.Embed(title=f"Documentation search!", description="")
 
-            num_sug = len(sug) if len(sug) < 10 else 10
-            
-            for j in range(num_sug):
-                line = sug[j].split()
-                if lib == 'https://pros.cs.purdue.edu/v5/objects.inv':
-                    embed.description+=f"[`{line[0]}`]({lib[:-11]}{line[3]})\n"
-                else:
-                    embed.description+=f"[`{line[0]}`]({lib[:-11]}{line[-2][:-1]}{line[0]})\n"
+                num_sug = len(sug) if len(sug) < 10 else 10
+                
+                for j in range(num_sug):
+                    line = sug[j].split()
+                    if lib == 'https://pros.cs.purdue.edu/v5/objects.inv':
+                        embed.description+=f"[`{line[0]}`]({lib[:-11]}{line[3]})\n"
+                    else:
+                        embed.description+=f"[`{line[0]}`]({lib[:-11]}{line[-2][:-1]}{line[0]})\n"
 
-            return await ctx.send(embed=embed)
+                self._cache[f'{lib}/{search}'] = embed
 
+        await ctx.send(embed=embed)
 
     @commands.command(aliases=('gitsearch',), description="Search for a user on GitHub!")
     @commands.cooldown(1, 5, commands.BucketType.user)
