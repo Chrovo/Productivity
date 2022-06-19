@@ -41,7 +41,7 @@ class ComputerScience(commands.Cog):
             cmd = self.bot.get_command(command)
 
             if not cmd:
-                await ctx.send(f'No command called "{command}" found.')
+                return await ctx.send(f'No command called "{command}" found.')
 
             path = inspect.getsourcefile(cmd.callback.__code__)
             srcfile = path[31:].replace(r'\\', '/')
